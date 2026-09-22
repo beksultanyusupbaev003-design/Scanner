@@ -418,16 +418,43 @@
     } catch(e){ done(false); }
   }
 
-  function renderDataMatrix(canvas, text){
+  function renderLabel(canvas, text){
     try {
-      bwipjs.toCanvas(canvas, {
+      var off = document.createElement('canvas');
+      bwipjs.toCanvas(off, {
         bcid: 'datamatrix',
         text: text,
-        scale: 4,
+        scale: 3,
         includetext: false,
         backgroundcolor: 'FFFFFF',
-        padding: 4
+        padding: 0
       });
+
+      var pad = 18;
+      var textCol = 30;
+      var dmSize = 260;
+      var W = textCol + pad * 2 + dmSize;
+      var H = dmSize + pad * 2;
+      canvas.width = W;
+      canvas.height = H;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(off, textCol + pad, pad, dmSize, dmSize);
+
+      var availableLen = H - pad * 2;
+      var fontSize = Math.max(9, Math.min(15, Math.floor(availableLen / (Math.max(text.length, 1) * 0.62))));
+
+      ctx.save();
+      ctx.translate(pad + 12, H - pad);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = '#111111';
+      ctx.font = fontSize + 'px "IBM Plex Mono", monospace';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+
       return true;
     } catch(e){
       return false;
@@ -512,7 +539,7 @@
     activeModalId = item.id;
     modalCode.textContent = item.code;
     modalMeta.textContent = formatTs(item.ts);
-    renderDataMatrix(modalCanvas, item.code);
+    renderLabel(modalCanvas, item.code);
     modalBackdrop.classList.add('show');
   }
   function closeModal(){
@@ -550,7 +577,7 @@
 
   function showResult(text){
     resultCode.textContent = text;
-    renderDataMatrix(resultCanvas, text);
+    renderLabel(resultCanvas, text);
     resultCard.classList.add('show');
     resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
